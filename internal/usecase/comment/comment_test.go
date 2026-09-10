@@ -265,7 +265,7 @@ func TestGetCommentReplies(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "error_from_repo",
+			name: "repo_comment_not_found",
 			params: dto.CommentRequest{
 				PostID:           10,
 				ReplyToCommentID: &replyToCommentID,
@@ -398,7 +398,7 @@ func TestCreateComment(t *testing.T) {
 			wantErr:   entity.MaxLengthExceeded,
 		},
 		{
-			name:    "error_from_post_repo",
+			name:    "repo_post_not_found",
 			comment: inputComment,
 			setupMock: func(commentMock *mocks.MockCommentRepo, postMock *mocks.MockPostRepo) {
 				postMock.EXPECT().GetByID(ctx, 10).
@@ -424,7 +424,7 @@ func TestCreateComment(t *testing.T) {
 			wantErr: entity.CommentsNotAllowed,
 		},
 		{
-			name:    "error_from_comment_repo",
+			name:    "repo_comment_not_found",
 			comment: inputComment,
 			setupMock: func(commentMock *mocks.MockCommentRepo, postMock *mocks.MockPostRepo) {
 				postMock.EXPECT().GetByID(ctx, 10).

@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      STORAGE: postgres
+      SRV_HOST: 0.0.0.0
+      SRV_PORT: 8000
+
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DB: posts
+      PG_SSL_MODE: disable
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: posts
+    volumes:
+      - ./db/ddl.sql:/docker-entrypoint-initdb.d/ddl.sql
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

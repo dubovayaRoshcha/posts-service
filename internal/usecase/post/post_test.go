@@ -92,7 +92,7 @@ func TestGetListPosts(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "error_from_repo",
+			name: "repo_post_not_found",
 			params: dto.PostRequest{
 				Limit:  10,
 				Offset: 0,
@@ -170,7 +170,7 @@ func TestGetPostByID(t *testing.T) {
 			wantErr:   entity.InvalidInput,
 		},
 		{
-			name:   "error_from_repo",
+			name:   "repo_post_not_found",
 			postID: 1,
 			setupMock: func(m *mocks.MockPostRepo) {
 				m.EXPECT().GetByID(ctx, 1).
@@ -278,7 +278,7 @@ func TestCreatePost(t *testing.T) {
 			wantErr:   entity.MaxLengthExceeded,
 		},
 		{
-			name: "error_from_repo",
+			name: "repo_post_not_found",
 			post: inputPost,
 			setupMock: func(m *mocks.MockPostRepo) {
 				m.EXPECT().Create(ctx, inputPost).

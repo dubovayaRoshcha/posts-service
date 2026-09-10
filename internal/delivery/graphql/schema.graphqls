@@ -1,0 +1,74 @@
+type Post {
+    id: ID!
+    userId: Int!
+    title: String!
+    description: String!
+    commentsAllowed: Boolean!
+}
+
+type Comment {
+    id: ID!
+    postId: Int!
+    replyToCommentId: Int
+    userId: Int!
+    text: String!
+}
+
+input PostRequest {
+    limit: Int!
+    offset: Int!
+}
+
+input CommentRequest {
+    postId: Int!
+    limit: Int!
+    offset: Int!
+}
+
+input CommentRepliesRequest {
+    postId: Int!
+    replyToCommentId: Int!
+    limit: Int!
+    offset: Int!
+}
+
+input CreatePostRequest {
+    userId: Int!
+    title: String!
+    description: String!
+    commentsAllowed: Boolean!
+}
+
+input CreateCommentRequest {
+    postId: Int!
+    replyToCommentId: Int
+    userId: Int!
+    text: String!
+}
+
+type PostResponse {
+    len: Int!
+    posts: [Post!]!
+}
+
+type CommentResponse {
+    len: Int!
+    comments: [Comment!]!
+}
+
+type Query {
+    posts(params: PostRequest!): PostResponse!
+    post(id: Int!): Post!
+
+    comments(params: CommentRequest!): CommentResponse!
+    replies(params: CommentRepliesRequest!): CommentResponse!
+}
+
+type Mutation {
+    createPost(params: CreatePostRequest!): Post!
+    createComment(params: CreateCommentRequest!): Comment!
+}
+
+type Subscription {
+    commentAdded(postId: Int!): Comment!
+}

@@ -1,0 +1,62 @@
+package post
+
+import (
+	"context"
+
+	"github.com/dubovayaRoshcha/posts-service/internal/entity"
+	"github.com/dubovayaRoshcha/posts-service/internal/usecase"
+	"github.com/dubovayaRoshcha/posts-service/internal/usecase/dto"
+	"github.com/dubovayaRoshcha/posts-service/internal/usecase/utils/validator"
+)
+
+type PostUseCase struct {
+	repo usecase.PostRepo
+}
+
+func NewPostUseCase(repo usecase.PostRepo) *PostUseCase {
+	return &PostUseCase{
+		repo: repo,
+	}
+}
+
+func (uc *PostUseCase) GetListPosts(ctx context.Context, params dto.PostRequest) (*dto.PostResponse, error) {
+	err := validator.ValidatePostParams(&params)
+	if err != nil {
+		return nil, err
+	}
+
+	posts, err := uc.repo.GetList(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.PostResponse{Posts: posts, Len: len(posts)}, nil
+}
+
+func (uc *PostUseCase) GetPostByID(ctx context.Context, postID int) (*entity.Post, error) {
+	err := validator.ValidateID(postID)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := uc.repo.GetByID(ctx, postID)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (uc *PostUseCase) CreatePost(ctx context.Context, post dto.PostDTO) (*entity.Post, error) {
+	err := validator.ValidatePost(&post)
+	if err != nil {
+		return nil, err
+	}
+
+	postResp, err := uc.repo.Create(ctx, post)
+	if err != nil {
+		return nil, err
+	}
+
+	return postResp, nil
+}

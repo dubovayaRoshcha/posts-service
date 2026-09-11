@@ -7,7 +7,6 @@ package graphql
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -49,13 +48,25 @@ func (r *mutationResolver) CreateComment(ctx context.Context, params CreateComme
 		return nil, err
 	}
 
-	return &Comment{
+	result := &Comment{
 		ID:               strconv.Itoa(comment.ID),
 		PostID:           comment.PostID,
 		ReplyToCommentID: comment.ReplyToCommentID,
 		UserID:           comment.UserID,
 		Text:             comment.Text,
-	}, nil
+	}
+
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, ch := range r.channelList[comment.PostID] {
+		select {
+		case ch <- result:
+		default:
+		}
+	}
+
+	return result, nil
 }
 
 // Posts is the resolver for the posts field.
@@ -158,7 +169,18 @@ func (r *queryResolver) Replies(ctx context.Context, params CommentRepliesReques
 
 // CommentAdded is the resolver for the commentAdded field.
 func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *Comment, error) {
-	panic(fmt.Errorf("not implemented: CommentAdded - commentAdded"))
+	ch := make(chan *Comment)
+
+	r.mu.Lock()
+	r.channelList[postID] = append(r.channelList[postID], ch)
+	r.mu.Unlock()
+
+	go func() {
+		<-ctx.Done()
+		r.removeChannel(postID, ch)
+	}()
+
+	return ch, nil
 }
 
 // Mutation returns MutationResolver implementation.

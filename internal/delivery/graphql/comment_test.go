@@ -350,3 +350,37 @@ func TestCreateComment(t *testing.T) {
 		})
 	}
 }
+
+func TestCommentAdded(t *testing.T) {
+	tests := []struct {
+		name   string
+		postID int
+	}{
+		{
+			name:   "OK",
+			postID: 10,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockPostUC := mocks.NewMockPostUseCase(ctrl)
+			mockCommentUC := mocks.NewMockCommentUseCase(ctrl)
+
+			resolver := NewResolver(mockPostUC, mockCommentUC)
+			subscription := &subscriptionResolver{resolver}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			got, err := subscription.CommentAdded(ctx, test.postID)
+
+			require.NoError(t, err)
+			require.NotNil(t, got)
+			require.Len(t, resolver.channelList[test.postID], 1)
+		})
+	}
+}

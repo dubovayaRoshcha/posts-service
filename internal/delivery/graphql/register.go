@@ -17,6 +17,6 @@ func RegisterHandlers(app *mux.Router, resolver *Resolver) {
 		),
 	)
 
-	app.Handle("/graphql", server).Methods(http.MethodPost)
+	app.Handle("/graphql", server)
 	app.Handle("/", playground.Handler("", "/graphql")).Methods(http.MethodGet)
 }

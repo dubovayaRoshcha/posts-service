@@ -109,6 +109,28 @@ func (r *CommentRepo) GetReplies(ctx context.Context, params dto.CommentRequest)
 	return comments, nil
 }
 
+func (r *CommentRepo) GetByID(ctx context.Context, commentID int) (*entity.Comment, error) {
+	query := `
+		SELECT id, post_id, reply_to_comment_id, user_id, text, created_at
+		FROM comments
+		WHERE id = $1
+	`
+
+	var comment entity.Comment
+
+	err := r.db.QueryRow(ctx, query, commentID).Scan(
+		&comment.ID, &comment.PostID,
+		&comment.ReplyToCommentID,
+		&comment.UserID, &comment.Text,
+		&comment.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &comment, nil
+}
+
 func (r *CommentRepo) Create(ctx context.Context, comment dto.CommentDTO) (*entity.Comment, error) {
 	query := `
 		INSERT INTO comments (

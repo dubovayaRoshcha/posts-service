@@ -217,6 +217,66 @@ func TestGetReplies(t *testing.T) {
 	}
 }
 
+func TestGetByID(t *testing.T) {
+	createdAt := time.Now()
+
+	tests := []struct {
+		name      string
+		comments  map[int]entity.Comment
+		commentID int
+		want      *entity.Comment
+		wantErr   error
+	}{
+		{
+			name: "OK",
+			comments: map[int]entity.Comment{
+				1: {
+					ID:               1,
+					PostID:           10,
+					ReplyToCommentID: nil,
+					UserID:           20,
+					Text:             "first comment",
+					CreatedAt:        createdAt,
+				},
+			},
+			commentID: 1,
+			want: &entity.Comment{
+				ID:               1,
+				PostID:           10,
+				ReplyToCommentID: nil,
+				UserID:           20,
+				Text:             "first comment",
+				CreatedAt:        createdAt,
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "comment_not_found",
+			comments:  map[int]entity.Comment{},
+			commentID: 1,
+			want:      nil,
+			wantErr:   entity.CommentNotFound,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			repo := &CommentRepo{
+				comments: test.comments,
+			}
+
+			got, err := repo.GetByID(context.Background(), test.commentID)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, test.want, got)
+		})
+	}
+}
+
 func TestCreate(t *testing.T) {
 	replyToCommentID := 1
 

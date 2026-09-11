@@ -42,6 +42,15 @@ func (uc *CommentUseCase) GetCommentReplies(ctx context.Context, params dto.Comm
 		return nil, fmt.Errorf("validator.ValidateRepliesParams: %w", err)
 	}
 
+	replyToComment, err := uc.commentRepo.GetByID(ctx, *params.ReplyToCommentID)
+	if err != nil {
+		return nil, fmt.Errorf("uc.commentRepo.GetByID: %w", err)
+	}
+
+	if replyToComment.PostID != params.PostID {
+		return nil, entity.CommentNotFound
+	}
+
 	comments, err := uc.commentRepo.GetReplies(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("uc.commentRepo.GetReplies: %w", err)
@@ -63,6 +72,17 @@ func (uc *CommentUseCase) CreateComment(ctx context.Context, comment dto.Comment
 
 	if !post.CommentsAllowed {
 		return nil, entity.CommentsNotAllowed
+	}
+
+	if comment.ReplyToCommentID != nil {
+		replyToComment, err := uc.commentRepo.GetByID(ctx, *comment.ReplyToCommentID)
+		if err != nil {
+			return nil, fmt.Errorf("uc.commentRepo.GetByID: %w", err)
+		}
+
+		if replyToComment.PostID != comment.PostID {
+			return nil, entity.CommentNotFound
+		}
 	}
 
 	commentResp, err := uc.commentRepo.Create(ctx, comment)

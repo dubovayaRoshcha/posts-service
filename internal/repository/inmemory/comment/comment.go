@@ -98,6 +98,18 @@ func (r *CommentRepo) GetReplies(ctx context.Context, params dto.CommentRequest)
 	return comments, nil
 }
 
+func (r *CommentRepo) GetByID(ctx context.Context, commentID int) (*entity.Comment, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	comment, ok := r.comments[commentID]
+	if !ok {
+		return nil, entity.CommentNotFound
+	}
+
+	return &comment, nil
+}
+
 func (r *CommentRepo) Create(ctx context.Context, comment dto.CommentDTO) (*entity.Comment, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

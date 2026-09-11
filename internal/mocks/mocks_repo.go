@@ -119,6 +119,21 @@ func (mr *MockCommentRepoMockRecorder) Create(ctx, comment interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockCommentRepo)(nil).Create), ctx, comment)
 }
 
+// GetByID mocks base method.
+func (m *MockCommentRepo) GetByID(ctx context.Context, commentID int) (*entity.Comment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByID", ctx, commentID)
+	ret0, _ := ret[0].(*entity.Comment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByID indicates an expected call of GetByID.
+func (mr *MockCommentRepoMockRecorder) GetByID(ctx, commentID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockCommentRepo)(nil).GetByID), ctx, commentID)
+}
+
 // GetReplies mocks base method.
 func (m *MockCommentRepo) GetReplies(ctx context.Context, params dto.CommentRequest) ([]entity.Comment, error) {
 	m.ctrl.T.Helper()

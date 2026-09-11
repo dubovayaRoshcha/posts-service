@@ -169,6 +169,13 @@ func TestGetCommentReplies(t *testing.T) {
 		Len:      len(existingComments),
 	}
 
+	replyToComment := &entity.Comment{
+		ID:     1,
+		PostID: 10,
+		UserID: 10,
+		Text:   "parent comment",
+	}
+
 	tests := []struct {
 		name      string
 		params    dto.CommentRequest
@@ -185,6 +192,9 @@ func TestGetCommentReplies(t *testing.T) {
 				Offset:           0,
 			},
 			setupMock: func(m *mocks.MockCommentRepo) {
+				m.EXPECT().GetByID(ctx, replyToCommentID).
+					Return(replyToComment, nil).Times(1)
+
 				m.EXPECT().GetReplies(ctx, dto.CommentRequest{
 					PostID:           10,
 					ReplyToCommentID: &replyToCommentID,
@@ -253,6 +263,9 @@ func TestGetCommentReplies(t *testing.T) {
 				Offset:           0,
 			},
 			setupMock: func(m *mocks.MockCommentRepo) {
+				m.EXPECT().GetByID(ctx, replyToCommentID).
+					Return(replyToComment, nil).Times(1)
+
 				m.EXPECT().GetReplies(ctx, dto.CommentRequest{
 					PostID:           10,
 					ReplyToCommentID: &replyToCommentID,
@@ -265,7 +278,7 @@ func TestGetCommentReplies(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "repo_comment_not_found",
+			name: "comment_not_found",
 			params: dto.CommentRequest{
 				PostID:           10,
 				ReplyToCommentID: &replyToCommentID,
@@ -273,13 +286,26 @@ func TestGetCommentReplies(t *testing.T) {
 				Offset:           0,
 			},
 			setupMock: func(m *mocks.MockCommentRepo) {
-				m.EXPECT().GetReplies(ctx, dto.CommentRequest{
-					PostID:           10,
-					ReplyToCommentID: &replyToCommentID,
-					Limit:            10,
-					Offset:           0,
-				}).
+				m.EXPECT().GetByID(ctx, replyToCommentID).
 					Return(nil, entity.CommentNotFound).Times(1)
+			},
+			want:    nil,
+			wantErr: entity.CommentNotFound,
+		},
+		{
+			name: "comment_from_another_post",
+			params: dto.CommentRequest{
+				PostID:           10,
+				ReplyToCommentID: &replyToCommentID,
+				Limit:            10,
+				Offset:           0,
+			},
+			setupMock: func(m *mocks.MockCommentRepo) {
+				m.EXPECT().GetByID(ctx, replyToCommentID).
+					Return(&entity.Comment{
+						ID:     replyToCommentID,
+						PostID: 20,
+					}, nil).Times(1)
 			},
 			want:    nil,
 			wantErr: entity.CommentNotFound,
@@ -325,6 +351,13 @@ func TestCreateComment(t *testing.T) {
 		Text:             "new comment",
 	}
 
+	replyToComment := &entity.Comment{
+		ID:     1,
+		PostID: 10,
+		UserID: 30,
+		Text:   "parent comment",
+	}
+
 	existingPost := &entity.Post{
 		ID:              10,
 		UserID:          10,
@@ -354,6 +387,9 @@ func TestCreateComment(t *testing.T) {
 			setupMock: func(commentMock *mocks.MockCommentRepo, postMock *mocks.MockPostRepo) {
 				postMock.EXPECT().GetByID(ctx, 10).
 					Return(existingPost, nil).Times(1)
+
+				commentMock.EXPECT().GetByID(ctx, replyToCommentID).
+					Return(replyToComment, nil).Times(1)
 
 				commentMock.EXPECT().Create(ctx, inputComment).
 					Return(expectedComment, nil).Times(1)
@@ -424,14 +460,30 @@ func TestCreateComment(t *testing.T) {
 			wantErr: entity.CommentsNotAllowed,
 		},
 		{
-			name:    "repo_comment_not_found",
+			name:    "reply_comment_not_found",
 			comment: inputComment,
 			setupMock: func(commentMock *mocks.MockCommentRepo, postMock *mocks.MockPostRepo) {
 				postMock.EXPECT().GetByID(ctx, 10).
 					Return(existingPost, nil).Times(1)
 
-				commentMock.EXPECT().Create(ctx, inputComment).
+				commentMock.EXPECT().GetByID(ctx, replyToCommentID).
 					Return(nil, entity.CommentNotFound).Times(1)
+			},
+			want:    nil,
+			wantErr: entity.CommentNotFound,
+		},
+		{
+			name:    "reply_comment_from_another_post",
+			comment: inputComment,
+			setupMock: func(commentMock *mocks.MockCommentRepo, postMock *mocks.MockPostRepo) {
+				postMock.EXPECT().GetByID(ctx, 10).
+					Return(existingPost, nil).Times(1)
+
+				commentMock.EXPECT().GetByID(ctx, replyToCommentID).
+					Return(&entity.Comment{
+						ID:     replyToCommentID,
+						PostID: 20,
+					}, nil).Times(1)
 			},
 			want:    nil,
 			wantErr: entity.CommentNotFound,

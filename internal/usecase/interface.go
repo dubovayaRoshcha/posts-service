@@ -17,5 +17,6 @@ type PostRepo interface {
 type CommentRepo interface {
 	GetTopList(ctx context.Context, params dto.CommentRequest) ([]entity.Comment, error)
 	GetReplies(ctx context.Context, params dto.CommentRequest) ([]entity.Comment, error)
+	GetByID(ctx context.Context, commentID int) (*entity.Comment, error)
 	Create(ctx context.Context, comment dto.CommentDTO) (*entity.Comment, error)
 }

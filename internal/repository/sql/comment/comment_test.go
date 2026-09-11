@@ -229,6 +229,93 @@ func TestGetReplies(t *testing.T) {
 	}
 }
 
+func TestGetByID(t *testing.T) {
+	createdAt := time.Now()
+
+	expectedComment := &entity.Comment{
+		ID:               1,
+		PostID:           10,
+		ReplyToCommentID: nil,
+		UserID:           20,
+		Text:             "first comment",
+		CreatedAt:        createdAt,
+	}
+
+	query := regexp.QuoteMeta(`
+		SELECT id, post_id, reply_to_comment_id, user_id, text, created_at
+		FROM comments
+		WHERE id = $1
+	`)
+
+	testErr := errors.New("database error")
+
+	tests := []struct {
+		name      string
+		commentID int
+		setupMock func(m pgxmock.PgxPoolIface)
+		want      *entity.Comment
+		wantErr   bool
+	}{
+		{
+			name:      "OK",
+			commentID: 1,
+			setupMock: func(m pgxmock.PgxPoolIface) {
+				rows := pgxmock.NewRows([]string{
+					"id", "post_id", "reply_to_comment_id", "user_id", "text", "created_at",
+				}).AddRow(1, 10, nil, 20, "first comment", createdAt)
+
+				m.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
+			},
+			want:    expectedComment,
+			wantErr: false,
+		},
+		{
+			name:      "scan_error",
+			commentID: 1,
+			setupMock: func(m pgxmock.PgxPoolIface) {
+				rows := pgxmock.NewRows([]string{
+					"id", "post_id", "reply_to_comment_id", "user_id", "text", "created_at",
+				}).AddRow("bad-id", 10, nil, 20, "first comment", createdAt)
+
+				m.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:      "query_error",
+			commentID: 1,
+			setupMock: func(m pgxmock.PgxPoolIface) {
+				m.ExpectQuery(query).WithArgs(1).WillReturnError(testErr)
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mock, err := pgxmock.NewPool()
+			require.NoError(t, err)
+			defer mock.Close()
+
+			test.setupMock(mock)
+
+			repo := NewCommentRepo(mock)
+
+			got, err := repo.GetByID(context.Background(), test.commentID)
+			if test.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, test.want, got)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
 func TestCreate(t *testing.T) {
 	createdAt := time.Now()
 	replyToCommentID := 1

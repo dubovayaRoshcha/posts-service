@@ -5,6 +5,7 @@ import (
 
 	"github.com/dubovayaRoshcha/posts-service/internal/entity"
 	"github.com/dubovayaRoshcha/posts-service/internal/repository/sql"
+	"github.com/dubovayaRoshcha/posts-service/internal/repository/sql/utils"
 	"github.com/dubovayaRoshcha/posts-service/internal/usecase/dto"
 )
 
@@ -72,7 +73,7 @@ func (r *PostRepo) GetByID(ctx context.Context, postID int) (*entity.Post, error
 		&post.CreatedAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, utils.HandelPgError(err, entity.PostNotFound)
 	}
 
 	return &post, nil

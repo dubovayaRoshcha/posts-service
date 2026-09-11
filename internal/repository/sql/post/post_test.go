@@ -140,7 +140,7 @@ func TestGetByID(t *testing.T) {
 		postID    int
 		setupMock func(m pgxmock.PgxPoolIface)
 		want      *entity.Post
-		wantErr   bool
+		wantErr   error
 	}{
 		{
 			name:   "OK",
@@ -153,7 +153,7 @@ func TestGetByID(t *testing.T) {
 				m.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
 			},
 			want:    expectedPost,
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:   "not_found",
@@ -166,7 +166,7 @@ func TestGetByID(t *testing.T) {
 				m.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
 			},
 			want:    nil,
-			wantErr: true,
+			wantErr: entity.PostNotFound,
 		},
 		{
 			name:   "query_error",
@@ -175,7 +175,7 @@ func TestGetByID(t *testing.T) {
 				m.ExpectQuery(query).WithArgs(1).WillReturnError(testErr)
 			},
 			want:    nil,
-			wantErr: true,
+			wantErr: testErr,
 		},
 	}
 
@@ -191,8 +191,8 @@ func TestGetByID(t *testing.T) {
 
 			got, err := repo.GetByID(context.Background(), test.postID)
 
-			if test.wantErr {
-				require.Error(t, err)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
 				return
 			}
 

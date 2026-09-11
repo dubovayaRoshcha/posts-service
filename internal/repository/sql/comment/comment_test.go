@@ -254,7 +254,7 @@ func TestGetByID(t *testing.T) {
 		commentID int
 		setupMock func(m pgxmock.PgxPoolIface)
 		want      *entity.Comment
-		wantErr   bool
+		wantErr   error
 	}{
 		{
 			name:      "OK",
@@ -267,20 +267,7 @@ func TestGetByID(t *testing.T) {
 				m.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
 			},
 			want:    expectedComment,
-			wantErr: false,
-		},
-		{
-			name:      "scan_error",
-			commentID: 1,
-			setupMock: func(m pgxmock.PgxPoolIface) {
-				rows := pgxmock.NewRows([]string{
-					"id", "post_id", "reply_to_comment_id", "user_id", "text", "created_at",
-				}).AddRow("bad-id", 10, nil, 20, "first comment", createdAt)
-
-				m.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
-			},
-			want:    nil,
-			wantErr: true,
+			wantErr: nil,
 		},
 		{
 			name:      "query_error",
@@ -289,7 +276,20 @@ func TestGetByID(t *testing.T) {
 				m.ExpectQuery(query).WithArgs(1).WillReturnError(testErr)
 			},
 			want:    nil,
-			wantErr: true,
+			wantErr: testErr,
+		},
+		{
+			name:      "not_found",
+			commentID: 1,
+			setupMock: func(m pgxmock.PgxPoolIface) {
+				rows := pgxmock.NewRows([]string{
+					"id", "post_id", "reply_to_comment_id", "user_id", "text", "created_at",
+				})
+
+				m.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
+			},
+			want:    nil,
+			wantErr: entity.CommentNotFound,
 		},
 	}
 
@@ -304,8 +304,8 @@ func TestGetByID(t *testing.T) {
 			repo := NewCommentRepo(mock)
 
 			got, err := repo.GetByID(context.Background(), test.commentID)
-			if test.wantErr {
-				require.Error(t, err)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
 				return
 			}
 

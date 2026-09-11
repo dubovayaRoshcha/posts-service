@@ -5,6 +5,7 @@ import (
 
 	"github.com/dubovayaRoshcha/posts-service/internal/entity"
 	"github.com/dubovayaRoshcha/posts-service/internal/repository/sql"
+	"github.com/dubovayaRoshcha/posts-service/internal/repository/sql/utils"
 	"github.com/dubovayaRoshcha/posts-service/internal/usecase/dto"
 )
 
@@ -125,7 +126,7 @@ func (r *CommentRepo) GetByID(ctx context.Context, commentID int) (*entity.Comme
 		&comment.CreatedAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, utils.HandelPgError(err, entity.CommentNotFound)
 	}
 
 	return &comment, nil

@@ -25,3 +25,9 @@ CREATE TABLE IF NOT EXISTS comments (
     CONSTRAINT comment_text_length_check
         CHECK (LENGTH(text) <= 2000)
 );
+
+CREATE INDEX IF NOT EXISTS idx_posts_created_at_id
+ON posts(created_at, id);
+
+CREATE INDEX IF NOT EXISTS idx_comments_post_reply_created_at_id
+ON comments(post_id, reply_to_comment_id, created_at, id);
